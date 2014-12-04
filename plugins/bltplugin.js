@@ -10,7 +10,7 @@ var BLTPlugin = {
     client.on(/^!givebltto/i, function (message) {
       var parts = message.data.split(' ')
       var target = parts[1]
-      if (parts.length < 2) {
+      if (parts.length >= 2) {
         client.say('/me '+message.nick +' gives a spicey BLT to '+target);        
       };
     })
