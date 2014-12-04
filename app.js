@@ -2,6 +2,7 @@ var dotenv = require('dotenv');
 var jf = require('jsonfile');
 var fs = require('fs')
 var WebSocket = require('ws');
+var nconf = require('nconf');
 
 // load secret variables from .env, unless you don't like it for some reason
 if(fs.existsSync('./.env') && process.env['NODOTENV'] !== 'TRUE'){
@@ -10,34 +11,45 @@ if(fs.existsSync('./.env') && process.env['NODOTENV'] !== 'TRUE'){
   fs.createReadStream('example.env').pipe(fs.createWriteStream('.env'));
 }
 
-// set globals
-var DESTINYGG_API_KEY = process.env['DESTINYGG_API_KEY']
-var WS_ENDPOINT = process.env.hasOwnProperty('WS_ENDPOINT') ? process.env['WS_ENDPOINT'] : 'destiny.gg:9998/ws'
+// config priority
+// 1. process.argv
+// 2. process.env
+nconf.argv().env();
+
+// 3. config.json
+nconf.file('local', './config.json');
 
 // list every config file we need
 var CONFIG_FILES = [
   'plugins'
-]
-var config = {}
+];
 
-// load config files
-CONFIG_FILES.forEach(function (p) {
-  var path = './config/'+p+'.json'
-  if (fs.existsSync(path)) {
-    config[p] = jf.readFileSync(path)
-  }else{
-    config[p] = {}
-    // load defaults/examples otherwise
-    if (fs.existsSync('./config/examples/'+p+'.json')) {
-      config[p] = jf.readFileSync('./config/examples/'+p+'.json')
-    }
-    jf.writeFileSync(path, config[p])
+// 4. plugins
+CONFIG_FILES.forEach(function(p) {
+  var file = p + '.json';
+  var conf = './config/' + file;
+  var example = './config/examples/' + file;
+
+  if (!fs.existsSync(conf)) {
+    fs.createReadStream(example).pipe(fs.createWriteStream(conf));
   }
-})
+
+  nconf.file(p, conf);
+});
+
+
+// 5. defaults
+nconf.defaults({
+  'WS_ENDPOINT': 'destiny.gg:9998/ws'
+});
+
+// set globals
+var DESTINYGG_API_KEY = nconf.get('DESTINYGG_API_KEY');
+var WS_ENDPOINT = nconf.get('WS_ENDPOINT');
 
 // load plugins
 var PLUGINS = {}
-config['plugins']['list'].forEach(function (p) {
+nconf.get('plugins:list').forEach(function (p) {
   PLUGINS[p] = require('./plugins/'+p+'.js')
 })
 

@@ -8,6 +8,7 @@ config/*.json
 # Secret Variables
 *.env
 !example.env
+config.json
 
 # Logs
 logs

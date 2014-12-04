@@ -1,5 +1,7 @@
 {
-  "list":[
-    "bltplugin"
-  ]
+  "plugins": {
+    "list": [
+      "bltplugin"
+    ]
+  }
 }
